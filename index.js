@@ -1,54 +1,63 @@
-const { Plugin } = require('powercord/entities');
-const { getModule } = require('powercord/webpack');
+const { Plugin } = require('powercord/entities')
+const { getModule } = require('powercord/webpack')
 
-const CurrentGuildStore = getModule(['getLastSelectedGuildId'], false);
-const SortedGuildStore = getModule(['getSortedGuilds'], false);
-const GuildActions = getModule(['markGuildAsRead'], false);
-const GuildFolderStore = getModule(['getExpandedFolders'], false);
+const CurrentGuildStore = getModule(['getLastSelectedGuildId'], false)
+const SortedGuildStore = getModule(['getSortedGuilds'], false)
+const GuildActions = getModule(['toggleGuildFolderExpand'], false)
+const GuildFolderStore = getModule(['getExpandedFolders'], false)
 
 
 class AutoCollapseFolders extends Plugin {
   constructor () {
-    super();
+    super()
 
     this._changeListener = () => {
-      const prevGuildID = this._currentGuildID;
-      const currGuildID = CurrentGuildStore.getLastSelectedGuildId();
+      const prevGuildID = this._currentGuildID
+      const currGuildID = CurrentGuildStore.getLastSelectedGuildId()
 
-      const prevFolderID = this.getFolderIDFromGuildID(prevGuildID);
-      const currFolderID = this.getFolderIDFromGuildID(currGuildID);
+      const currFolderID = this.getFolderIDFromGuildID(currGuildID)
 
-      if (
-        prevFolderID &&
-        prevFolderID !== currFolderID &&
-        GuildFolderStore.isFolderExpanded(prevFolderID)
-      ) {
+      if (currFolderID && !GuildFolderStore.isFolderExpanded(currFolderID)) {
         setTimeout(() => {
-          GuildActions.toggleGuildFolderExpand(prevFolderID);
-        }, 250);
+          GuildActions.toggleGuildFolderExpand(currFolderID)
+        }, 250)
       }
 
-      this._currentGuildID = currGuildID;
-    };
+      if (prevGuildID) {
+        setTimeout(() => {
+          for (let folder of this.getFolders()) {
+            if (folder.folderId !== currFolderID && GuildFolderStore.isFolderExpanded(folder.folderId)) {
+              GuildActions.toggleGuildFolderExpand(folder.folderId)
+            }
+          }
+        }, 250)
+      }
+
+      this._currentGuildID = currGuildID
+    }
   }
 
   startPlugin () {
-    this._currentGuildID = CurrentGuildStore.getLastSelectedGuildId();
-    CurrentGuildStore.addChangeListener(this._changeListener);
+    this._currentGuildID = CurrentGuildStore.getLastSelectedGuildId()
+    CurrentGuildStore.addChangeListener(this._changeListener)
   }
 
   pluginWillUnload () {
-    CurrentGuildStore.removeChangeListener(this._changeListener);
+    CurrentGuildStore.removeChangeListener(this._changeListener)
+  }
+
+  getFolders () {
+    return SortedGuildStore.guildFolders.filter(f => f.folderId)
   }
 
   getFolderIDFromGuildID (guildID) {
     for (let folder of SortedGuildStore.guildFolders) {
-      if (!folder.folderId) continue;
-      if (folder.guildIds.includes(guildID)) return folder.folderId;
+      if (!folder.folderId) continue
+      if (folder.guildIds.includes(guildID)) return folder.folderId
     }
 
-    return undefined;
+    return undefined
   }
 }
 
-module.exports = AutoCollapseFolders;
+module.exports = AutoCollapseFolders
