@@ -20,17 +20,17 @@ class AutoCollapseFolders extends Plugin {
       if (currFolderID && !GuildFolderStore.isFolderExpanded(currFolderID)) {
         setTimeout(() => {
           GuildActions.toggleGuildFolderExpand(currFolderID)
-        }, 250)
+        }, 500)
       }
 
       if (prevGuildID) {
         setTimeout(() => {
-          for (let folder of this.getFolders()) {
+          for (const folder of this.getFolders()) {
             if (folder.folderId !== currFolderID && GuildFolderStore.isFolderExpanded(folder.folderId)) {
               GuildActions.toggleGuildFolderExpand(folder.folderId)
             }
           }
-        }, 250)
+        }, 500)
       }
 
       this._currentGuildID = currGuildID
@@ -47,16 +47,14 @@ class AutoCollapseFolders extends Plugin {
   }
 
   getFolders () {
-    return SortedGuildStore.guildFolders.filter(f => f.folderId)
+    return SortedGuildStore.guildFolders.filter((f) => f.folderId)
   }
 
   getFolderIDFromGuildID (guildID) {
-    for (let folder of SortedGuildStore.guildFolders) {
-      if (!folder.folderId) continue
-      if (folder.guildIds.includes(guildID)) return folder.folderId
+    for (const folder of SortedGuildStore.guildFolders) {
+      if (!folder.folderId) { continue }
+      if (folder.guildIds.includes(guildID)) { return folder.folderId }
     }
-
-    return undefined
   }
 }
 
